@@ -8,29 +8,30 @@
 
 double f(double x)
 {
-	return x*x;
+    return x*x;
 }
 
 double solution(double a, double b)
 {
-	return b*b*b/3.0 - a*a*a/3.0;
+    return b*b*b/3.0 - a*a*a/3.0;
 }
 
 int main()
 {
-	int i;
-	double sum = 0.0, step = (B - A) / N;
-	clock_t start, end;
+    int i;
+    double sum = 0.0, h = (B - A) / N;
+    clock_t start, end;
 
-	start = clock();
-	for (i = 0; i < N; i++) {
-		sum = sum + f(i*step)*step;	
-	}
-	end = clock();
+    start = clock();
+    for (i = 0; i < N; i++) {
+        sum += f(A + i*h);
+    }
+    sum *= h;
+    end = clock();
 
-	printf("result=%e\n", sum);
-	printf("error=%e\n", fabs(sum - solution(A, B)));
-	printf("elapsed time=%f\n", (double)(end - start)/CLOCKS_PER_SEC);
+    printf("result=%e\n", sum);
+    printf("error=%e\n", fabs(sum - solution(A, B)));
+    printf("elapsed time=%f\n", (double)(end - start)/CLOCKS_PER_SEC);
 
-	return 0;
+    return 0;
 }

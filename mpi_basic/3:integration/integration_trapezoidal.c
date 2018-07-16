@@ -6,7 +6,10 @@
 #define A 0.0
 #define B 1.0
 
-#define f(x) (x*x)
+double f(double x)
+{
+    return x*x;
+}
 
 double solution(double a, double b)
 {
@@ -16,10 +19,10 @@ double solution(double a, double b)
 int main(int argc, char *argv[])
 {
 	int i;
-	double my_sum = 0.0, sum = 0., step = (B - A) / N;
+	double my_sum = 0.0, sum = 0.0, h = (B - A) / N;
 	double start, end;
 	int rank, size;
-	int unit, chunk;
+    int unit, i_s, i_e;
 
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -27,13 +30,21 @@ int main(int argc, char *argv[])
 
 	start = MPI_Wtime();
 	unit = (N + size - 1) / size;
-	if (rank == size - 1) {
-		chunk = N - unit*(size - 1);
-	} else {
-		chunk = unit;
-	}
-	for (i = rank*unit; i < rank*unit + chunk; i++) {
-		my_sum += f(i*step);
+    if (rank == 0) {
+        i_s = 1;
+        i_e = unit;
+        my_sum = f(A)/2.0;
+    } else if (rank == size - 1) {
+        i_s = rank*unit;
+        i_e = N;
+        my_sum = f(B)/2.0;
+    } else {
+        i_s = rank*unit;
+        i_e = (rank + 1)*unit;
+        my_sum = 0.0;
+    }
+	for (i = i_s; i < i_e; i++) {
+		my_sum += f(A + i*h);
 	}
 	if (0 != rank) {
 		MPI_Send(&my_sum, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
@@ -43,7 +54,7 @@ int main(int argc, char *argv[])
 			MPI_Recv(&my_sum, 1, MPI_DOUBLE, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 			sum += my_sum;
 		}
-		sum *= step;
+		sum *= h;
 	}
 	end = MPI_Wtime();
 
