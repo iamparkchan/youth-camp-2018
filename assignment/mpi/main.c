@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include "blackhole_lab.h"
+#include <mpi.h>
 
 void ray_trace(const int number_of_points, double *value_storage, bool *completed, bool *changed)
 {
@@ -120,22 +121,54 @@ double get_time() {
     return tv.tv_sec + tv.tv_usec * 1.e-6;
 }
 
-int main()
+int main(int argc, char **argv)
 {
     int *status = malloc(sizeof(int   ) * C_RESOLUTION_TOTAL_PIXELS);
     double   *y = malloc(sizeof(double) * C_RESOLUTION_TOTAL_PIXELS);
     double   *z = malloc(sizeof(double) * C_RESOLUTION_TOTAL_PIXELS);
-
-    int w_start = 0;
-    int w_end   = C_RESOLUTION_WIDTH  - 1;
-    int h_start = 0;
-    int h_end   = C_RESOLUTION_HEIGHT - 1;
     
     double start = get_time();
-    run(w_start, w_end, h_start, h_end, status, y, z);
-    printf("Elapsed time: %fs\n", get_time() - start);
-
-    export(status, y, z);
+    
+    int my_rank, num_procs;
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+    
+    int w_start = 0;
+    int w_end = C_RESOLUTION_WIDTH - 1;
+    int h_start       [num_procs];
+    int h_end         [num_procs];
+    int start_offset  [num_procs];
+    int number_of_data[num_procs];
+    int unit = (C_RESOLUTION_HEIGHT + num_procs - 1) / num_procs;
+    for (int rank = 0; rank < num_procs; rank++) {
+        h_start       [rank] = unit * rank;
+        h_end         [rank] = (rank == num_procs - 1) ? C_RESOLUTION_HEIGHT - 1 : unit * (rank + 1) - 1;
+        start_offset  [rank] = h_start[rank] * C_RESOLUTION_WIDTH + w_start;
+        number_of_data[rank] = (w_end - w_start + 1) * (h_end[rank] - h_start[rank] + 1);
+    }
+    
+    run(w_start, w_end, h_start[my_rank], h_end[my_rank], status, y, z);
+    
+    if (0 == my_rank) {
+        for (int rank = 1; rank < num_procs; rank++) {
+            MPI_Recv(status + start_offset[rank], number_of_data[rank], MPI_INT   , rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Recv(     y + start_offset[rank], number_of_data[rank], MPI_DOUBLE, rank, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Recv(     z + start_offset[rank], number_of_data[rank], MPI_DOUBLE, rank, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        }
+    } else {
+        MPI_Send(status + start_offset[my_rank], number_of_data[my_rank], MPI_INT   , 0, 0, MPI_COMM_WORLD);
+        MPI_Send(     y + start_offset[my_rank], number_of_data[my_rank], MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
+        MPI_Send(     z + start_offset[my_rank], number_of_data[my_rank], MPI_DOUBLE, 0, 2, MPI_COMM_WORLD);
+    }
+    
+    MPI_Finalize();
+    
+    if (0 == my_rank) {
+        printf("Elapsed time: %fs\n", get_time() - start);
+        
+        export(status, y, z);
+    }
     
     free(status);
     free(y);
