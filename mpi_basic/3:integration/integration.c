@@ -2,7 +2,7 @@
 #include <math.h>
 #include <time.h>
 
-#define N 1000000000
+#define N 100000000
 #define A 0.0
 #define B 1.0
 
