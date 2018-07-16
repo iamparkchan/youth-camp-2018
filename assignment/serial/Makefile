@@ -1,0 +1,17 @@
+CC = gcc
+TARGET = bhlab
+OBJECTS = main.o 
+CFLAGS = -std=c99 -O3 $(MACRO)
+LINK = -lm
+#KERR = -DKERR_SPACETIME
+#WIDTH = -DC_RESOLUTION_WIDTH=400
+#HEIGHT = -DC_RESOLUTION_HEIGHT=400
+MACRO = $(KERR) $(WIDTH) $(HEIGHT)
+
+all : $(TARGET)
+
+$(TARGET) : $(OBJECTS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LINK)
+
+clean :
+	rm $(TARGET) $(OBJECTS)
