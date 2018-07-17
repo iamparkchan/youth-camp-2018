@@ -154,19 +154,7 @@ int main(int argc, char **argv)
     MPI_Gatherv(status + start_offset[my_rank], number_of_data[my_rank], MPI_INT   , status, number_of_data, start_offset, MPI_INT   , 0, MPI_COMM_WORLD);
     MPI_Gatherv(     y + start_offset[my_rank], number_of_data[my_rank], MPI_DOUBLE,      y, number_of_data, start_offset, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Gatherv(     z + start_offset[my_rank], number_of_data[my_rank], MPI_DOUBLE,      z, number_of_data, start_offset, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-/*
-    if (0 == my_rank) {
-        for (int rank = 1; rank < num_procs; rank++) {
-            MPI_Recv(status + start_offset[rank], number_of_data[rank], MPI_INT   , rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            MPI_Recv(     y + start_offset[rank], number_of_data[rank], MPI_DOUBLE, rank, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            MPI_Recv(     z + start_offset[rank], number_of_data[rank], MPI_DOUBLE, rank, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        }
-    } else {
-        MPI_Send(status + start_offset[my_rank], number_of_data[my_rank], MPI_INT   , 0, 0, MPI_COMM_WORLD);
-        MPI_Send(     y + start_offset[my_rank], number_of_data[my_rank], MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
-        MPI_Send(     z + start_offset[my_rank], number_of_data[my_rank], MPI_DOUBLE, 0, 2, MPI_COMM_WORLD);
-    }
-  */
+
     MPI_Finalize();
     
     if (0 == my_rank) {
